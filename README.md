@@ -4,10 +4,10 @@ Utworzono łańcuch w usłudze GitHub Actions, który buduje wieloarchitekturowy
 Łańcuch, wraz z niezbędnymi komentarzami umieszczony został w pliku `.github/workflows/main.yml`.
 
 #### Konfiguracja środowiska (Zmienne i Sekrety)
-`vars.DH_USERNAME` - nazwa użytkownika DockerHub
-`vars.DH_REPO` - nazwa repozytorium DockerHub
-`secrets.DH_PAT` - Token dostępu do DockerHub
-`secrets.GH_PAT` - Token dostępu do ghcr
+- `vars.DH_USERNAME` - nazwa użytkownika DockerHub
+- `vars.DH_REPO` - nazwa repozytorium DockerHub
+- `secrets.DH_PAT` - Token dostępu do DockerHub
+- `secrets.GH_PAT` - Token dostępu do ghcr
 
 #### Analiza podatności CVE
 Do wykonania analizy podatności zbudowano lokalny obraz. Następnie przetestowano go. Jeśli sprawdzany obraz zawiera zagrożenia wysokie lub krytyczne potok zostanie przerwany.
