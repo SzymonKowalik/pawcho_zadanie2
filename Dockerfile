@@ -4,24 +4,24 @@
 FROM alpine:3.22.4 AS builder
 
 # Install required tools
-RUN apk add --no-cache g++ cmake make upx git openssh-client
-
-# Add GitHub to known SSH hosts
-RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+RUN apk add --no-cache g++ cmake make upx
 
 # Create and change working directory
 WORKDIR /app
 
-# Clone repository using SSH mount
-RUN --mount=type=ssh git clone git@github.com:SzymonKowalik/pawcho_zadanie1_kod.git .
+# Copy app code
+COPY /code .
 
 # Compile code statically with size optimizations
 RUN mkdir build && cd build && \
     cmake -DCMAKE_BUILD_TYPE=MinSizeRel \
     -DCMAKE_C_FLAGS="-Os -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fvisibility=hidden" \
-    -DCMAKE_EXE_LINKER_FLAGS="-static -Wl,--gc-sections -s" ../code && \
+    -DCMAKE_EXE_LINKER_FLAGS="-static -Wl,--gc-sections -s" .. && \
     cmake --build . --config MinSizeRel && \
     upx --ultra-brute weatherApp # Compress binary
+
+# Copy static files
+COPY /static ./static
 
 # Stage 2 - Run compiled program
 FROM scratch

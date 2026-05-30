@@ -1,0 +1,155 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather App</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+        }
+        select, button {
+            background: white;
+            border: 1px solid gray;
+            border-radius: 4px;
+            padding: 4px;
+            width: 140px;
+            height: 30px;
+        }
+
+        button { margin-top: 8px;}
+
+        label { width: 100px; text-align: left; }
+        #result { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h1>Weather Service</h1>
+
+    <div class="form-group">
+        <label for="country">Country</label>
+        <select id="country">
+            <option value="Poland">Poland</option>
+            <option value="Germany">Germany</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="city">City</label>
+        <select id="city">
+            <option value="Warszawa">Warszawa</option>
+            <option value="Lublin">Lublin</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <button onclick="getWeather()">Check Weather</button>
+    </div>
+</div>
+
+<div id="result"></div>
+
+<script>
+    let locationsData = {};
+
+    async function init() {
+        const resultDiv = document.getElementById('result');
+        try {
+            const response = await fetch('/api/locations');
+            locationsData = await response.json();
+
+            populateCountries();
+
+            document.getElementById('country').addEventListener('change', populateCities);
+
+        } catch (error) {
+            resultDiv.innerText = "Error loading locations from server.";
+            console.error(error);
+        }
+    }
+
+    function populateCountries() {
+        const countrySelect = document.getElementById('country');
+        countrySelect.innerHTML = "";
+
+        Object.keys(locationsData).forEach(country => {
+            const opt = document.createElement('option');
+            opt.value = country;
+            opt.innerText = country;
+            countrySelect.appendChild(opt);
+        });
+
+        populateCities();
+    }
+
+    function populateCities() {
+        const countrySelect = document.getElementById('country');
+        const citySelect = document.getElementById('city');
+        const selectedCountry = countrySelect.value;
+
+        citySelect.innerHTML = "";
+
+        if (locationsData[selectedCountry]) {
+            locationsData[selectedCountry].forEach(cityObj => {
+                const opt = document.createElement('option');
+                opt.value = cityObj.name;
+                opt.innerText = cityObj.name;
+                opt.dataset.lat = cityObj.lat;
+                opt.dataset.lon = cityObj.lon;
+                citySelect.appendChild(opt);
+            });
+        }
+    }
+
+    async function getWeather() {
+        const resultDiv = document.getElementById('result');
+
+        const citySelect = document.getElementById('city');
+
+        const selectedOption = citySelect.options[citySelect.selectedIndex];
+
+        if (!selectedOption) {
+            alert("Please select a city first!");
+            return;
+        }
+
+        const cityName = selectedOption.value;
+        const lat = selectedOption.dataset.lat;
+        const lon = selectedOption.dataset.lon;
+
+        try {
+            const response = await fetch(
+                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,wind_speed_10m,wind_direction_10m&timezone=auto&forecast_days=1`
+            );
+            const data = await response.json();
+
+            let temperature = `${data.current.temperature_2m}${data.current_units.temperature_2m}`;
+            let precipitation = `${data.current.precipitation}${data.current_units.precipitation}`;
+            let windSpeed = `${data.current.wind_speed_10m}${data.current_units.wind_speed_10m}`;
+
+            resultDiv.innerHTML = `<b>Current weather in ${cityName}:</b><br>
+                Temperature: ${temperature}<br>
+                Precipitation: ${precipitation}<br>
+                Wind Speed: ${windSpeed}`;
+
+        } catch (error) {
+            resultDiv.innerText = "Error fetching current weather.";
+            console.error(error);
+        }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
