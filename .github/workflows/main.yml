@@ -1,6 +1,7 @@
 name: Build and Push Image
 
 on:
+  # Ustawienie uruchamiania łańcucha po ręcznym uruchomieniu lub utworzeniu tagu
   workflow_dispatch:
   push:
     tags:
@@ -18,6 +19,7 @@ jobs:
       - name: Check out the source_repo
         uses: actions/checkout@v6
 
+      # Zdefiniowanie, w jaki sposób będą identyfikowane obrazy
       - name: Docker metadata definitions
         id: meta
         uses: docker/metadata-action@v6
@@ -47,6 +49,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GH_PAT }}
 
+      # Utworzenie lokalnego obrazu w celu analizy podatności
       - name: Build local image for vulnerability scanning
         uses: docker/build-push-action@v7
         with:
@@ -55,6 +58,7 @@ jobs:
           tags: local-scan-image:latest
           cache-from: type=registry,ref=${{ vars.DH_USERNAME }}/${{ vars.DH_REPO }}:buildcache
 
+      # Analiza podatności z wykorzystaniem narzędzia Trivy
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -65,6 +69,7 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
+      # Budowanie i przesłanie wieloarchitekturowego obrazu do rejestru ghcr
       - name: Build and push multi-arch image
         uses: docker/build-push-action@v7
         with:
